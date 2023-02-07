@@ -1,0 +1,40 @@
+
+import { Flags, Args } from '@oclif/core';
+import { expect } from 'chai';
+import BaseCommand from '../../class/base-command.js';
+import Instance from '../../class/instance.js';
+import ui from '../../class/ui.js';
+
+
+
+
+export default class §class§ extends BaseCommand<typeof §class§> {
+  static description = §description§
+
+
+  static examples = [
+    '<%= config.bin %> <%= command.id %>',
+  ]
+
+  
+
+  static flags = {
+    §flag§: Flags.boolean({ char: §flag§, description: §flag§ }),
+  }
+
+  static args = {
+    §arg§: Args.string({ description: §arg§, required: true }),
+  }
+
+
+  public async run(): Promise<void> {
+    try {
+      ui.action.start(§doing§);
+      §action§
+      this.success(§done§);
+    } catch (e) {
+      ui.throw(e);
+    }
+
+  }
+}

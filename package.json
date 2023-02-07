@@ -1,0 +1,120 @@
+{
+  "name": "mpdk2",
+  "version": "0.0.0",
+  "description": "Moodle Plugin Development Kit",
+  "author": "Mattia Bonzi @mattiabonzi",
+  "bin": {
+    "mpdk": "./bin/run.js"
+  },
+  "type": "module",
+  "homepage": "https://github.com/mattiabonzi/mpdk2",
+  "license": "MIT",
+  "export": "dist/index.js",
+  "repository": "mattiabonzi/mpdk2",
+  "files": [
+    "/bin",
+    "/dist",
+    "/npm-shrinkwrap.json",
+    "/oclif.manifest.json"
+  ],
+  "dependencies": {
+    "@types/dateformat": "^5.0.0",
+    "axios": "^1.2.6",
+    "axios-request-throttle": "^1.0.0",
+    "chalk": "^5.2.0",
+    "cli-style": "^0.1.1",
+    "dateformat": "^5.0.3",
+    "docker-cli-js": "^2.10.0",
+    "hostile": "^1.3.3",
+    "inquirer": "^8.2.5",
+    "inquirer-search-list": "^1.2.6",
+    "json2md": "^2.0.0",
+    "jsonpath-plus": "^7.2.0",
+    "mustache": "^4.2.0",
+    "node_dns_changer": "^1.1.9",
+    "node-html-parser": "^6.1.4",
+    "node-ts": "^5.1.2",
+    "nodegit": "^0.28.0-alpha.20",
+    "nodejs-file-downloader": "^4.10.6",
+    "phpvarparser": "^1.0.1",
+    "semver": "^7.3.8",
+    "supports-color": "^9.3.1",
+    "tcp-port-used": "^1.0.2",
+    "unzipper": "^0.10.11",
+    "which": "^3.0.0",
+    "whoami": "^0.0.3",
+    "write-yaml-file": "^4.2.0"
+  },
+  "devDependencies": {
+    "@oclif/color": "^1.0.3",
+    "@oclif/core": "^2",
+    "@oclif/plugin-help": "^5",
+    "@oclif/plugin-plugins": "^2.2.2",
+    "@oclif/test": "^2.3.3",
+    "@types/capitalize": "^2.0.0",
+    "@types/chai": "^4",
+    "@types/debug": "^4.1.7",
+    "@types/decompress": "^4.2.4",
+    "@types/hostile": "^1.3.0",
+    "@types/inquirer": "^9.0.3",
+    "@types/jsonpath": "^0.2.0",
+    "@types/mocha": "^9.0.0",
+    "@types/mustache": "^4.2.2",
+    "@types/node": "^18.11.18",
+    "@types/nodegit": "^0.28.2",
+    "@types/semver": "^7.3.13",
+    "@types/tcp-port-used": "^1.0.1",
+    "@types/unzipper": "^0.10.5",
+    "@types/which": "^2.0.1",
+    "chai": "^4",
+    "eslint": "^7.32.0",
+    "eslint-config-oclif": "^4",
+    "eslint-config-oclif-typescript": "^1.0.3",
+    "mocha": "^9",
+    "oclif": "^3",
+    "shx": "^0.3.3",
+    "ts-node": "^10.9.1",
+    "tslib": "^2.4.1",
+    "typescript": "^4.9.4"
+  },
+  "oclif": {
+    "bin": "mpdk",
+    "dirname": "mpdk",
+    "commands": "./dist/commands",
+    "plugins": [
+      "@oclif/plugin-help"
+    ],
+    "topicSeparator": " ",
+    "topics": {
+      "instance": {
+        "description": "Instance related commands, run mpdk instance --help for more info"
+      },
+      "plugin": {
+        "description": "Plugins related commands, run mpdk plugin --help for more info"
+      },
+      "dns": {
+        "description": "Dns related commands, run mpdk dns --help for more info"
+      },
+      "proxy": {
+        "description": "Proxy related commands, run mpdk proxy --help for more info"
+      }
+    }
+  },
+  "scripts": {
+    "build": "shx rm -rf dist && tsc -b",
+    "lint": "eslint . --ext .ts --config .eslintrc",
+    "postpack": "shx rm -f oclif.manifest.json",
+    "posttest": "npm lint",
+    "prepack": "npm build && oclif manifest && oclif readme",
+    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
+    "version": "oclif readme && git add README.md"
+  },
+  "engines": {
+    "node": ">=15"
+  },
+  "bugs": "https://github.com/mattiabonzi/mpdk2/issues",
+  "keywords": [
+    "oclif"
+  ],
+  "types": "dist/index.d.ts"
+}
