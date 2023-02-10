@@ -3,8 +3,9 @@ import { existsSync, mkdirSync,  rmSync, readdirSync, renameSync, copyFileSync }
 import { join  } from 'path';
 import DockerClient from './docker.js';
 import ui from './ui.js';
-import * as Git from "nodegit";
-import * as which from 'which';
+import Git from "nodegit";
+const { Clone } = Git;
+import which from 'which';
 import * as port from 'tcp-port-used';
 import * as semver from 'semver'
 
@@ -45,7 +46,6 @@ export default class Mpdk extends HasSetting {
     private _plugin:MoodlePlugin;
 
     private _home:string="";
-    private _bin:string="";
     private _configDir:string="";
     private _dataDir:string="";
     private _platform:string="";
@@ -57,18 +57,20 @@ export default class Mpdk extends HasSetting {
     private _github:GitHubInfo={token:'',username:'',org:''};
     private _baseDir:string="";
     private _minPort:number=10000;
-    private _maxPort:number=10100;
+    private _maxPort:number=15000;
     private _dns:boolean=true;
     private _proxy:boolean=true;
-    private _remoteHost:string='';
+  
     private _browser:string="chrome";
     private _defaultHost:string=".moodle.dev";
     private _dev:boolean=true;
     private _cacheDir:string="";
-    private _logDocker:boolean=false;
-    private  _defaultInstance:any={}
+    private _defaultDb:string="pgsql";
+    private  _defaultInstance:string="";
     private _defaultBadge:string[]=[];
     private _copyright:string="";
+    private _assetDir:string="";
+    
 
 
     
@@ -99,20 +101,41 @@ export default class Mpdk extends HasSetting {
 
 
     public getDefaultSetting(config:InitialConfig) {
-       return {
+      var baseDir = join(config.home, 'Moodle-plugin');
+      var gitFile =  join(config.home, '.gitconfig');
+      var gitContent = null;
+      if (existsSync(gitFile))
+        gitContent = FileUtils.readFile(gitFile);
+      
+      return {
         home : config.home,
         configDir : config.configDir,
         dataDir : config.dataDir,
         cacheDir : config.cacheDir,
         platform : config.platform,
-        configFile : join(config.configDir, 'config.json'),
-        user : `${os.userInfo().username} @${os.userInfo().username}`,
-        baseDir : join(config.home, 'Moodle-plugin'),
-        instancesDir : join(this.baseDir, 'instances'),
-        pluginsDir : join(this.baseDir, 'plugin'),
-        moodleDir : join(this.baseDir, 'moodle'),
-        moodleDockerDir : join(this.dataDir, 'moodle-docker')
+        baseDir : baseDir,
+        instancesDir : join(baseDir, 'instances'),
+        pluginsDir : join(baseDir, 'plugin'),
+        moodleDir : join(baseDir, 'moodle'),
+        moodleDockerDir : join(config.dataDir, 'moodle-docker'),
+        assetDir: join(config.dataDir, 'mpdk-assets'),
+        procy: true,
+        dns: true,
+        minPort:10000,
+        maxPort:15000,
+        browser:"chrome",
+        defaultHost:".moodle.dev",
+        defaultDb:"pgsql",
+        user : {
+          email: gitContent?.match(/email = (.*@.*\.[A-Za-z]*)/)?.[1],
+          name: gitContent?.match(/name = (.*)/)?.[1]
+        },
+        github : {
+          username : os.userInfo().username,
+        },
+        defaultBadge: ['version', 'moodle-version', 'php-version', 'build', 'test', 'semantic-version', 'license', 'downloads', 'github-workflow'],
        }
+        
     }
 
 
@@ -137,25 +160,36 @@ export default class Mpdk extends HasSetting {
      * @param {*} options Options provided by the user or default one
      */
     public async install(options: any) {
-        var configFile = join(this.configDir, 'config.json');
-        const docker = new DockerClient(this.remoteHost);
-
+        this.configFile = join(options.configDir, 'config.json');
+        const docker = new DockerClient();
+        this.debug('Installing to dir: '+options.baseDir);
         //Sanity check
-        if (existsSync(configFile)) {
+        if (existsSync(this.configFile)) {
             ui.stop("Already installed!");
         }
         if (!which.sync('git', { nothrow: true })) {
             ui.stop('Git must be install to continue!')
         }
         var data = await docker.cmd('compose version');
-        if (!data || !data.includes('Docker Compose')) {
+        if (!data || !data.raw.includes('Docker Compose')) {
             ui.stop("Docker must be installed to continue!");
         }
-
+ 
       
-        //FIXME: this.instance.db = options.defaultDb;
-        //delete options.defaultDb;
-        this.load(options);
+        this.debug('Check passed, loading config');
+        this.load({...options,
+          user: {
+            name: options.fullname,
+            email: options.email,
+          },
+          github: {
+            username: options.githubUsername,
+            token: options.githubToken,
+            org: options.githubOrg,
+          },
+          copyright: `${options.fullname} <${options.email}>`
+
+        });
         
 
         //Dns
@@ -165,17 +199,21 @@ export default class Mpdk extends HasSetting {
 
         //Create dirs
         try {
+            this.debug('Creating directories');
             mkdirSync(this.instancesDir, { recursive: true });
             mkdirSync(this.pluginsDir);
             mkdirSync(this.moodleDir);
-            mkdirSync(this.moodleDockerDir, { recursive: true });
+            mkdirSync(this.dataDir, { recursive: true });
             mkdirSync(join(this.configDir, 'proxy'), { recursive: true });
+            mkdirSync(join(this.configDir, 'dns'));
+            mkdirSync(join(this.cacheDir), { recursive: true });
         } catch (e) {
             ui.error('Something went wrong creating a directory, check the provided path and permissions', e as Error)
         }
 
         //Export config
         try {
+            this.debug('Exporting config');
             this.saveSetting();
         } catch (e) {
             ui.error('Something went wrong creating the config file, check the provided path and permissions', e as Error)
@@ -183,18 +221,23 @@ export default class Mpdk extends HasSetting {
 
         //Clone moodle-docker repo
         try {
+            this.debug('Cloning moodle-docker and mpdk-asset');
             await Promise.all(
                 [
-                    Git.Clone.clone("https://github.com/moodlehq/moodle-docker.git", this.moodleDockerDir),
-                    Git.Clone.clone("https://github.com/mattiabonzi/mpdk-docker.git", this.moodleDockerDir)
+                    Clone.clone("https://github.com/moodlehq/moodle-docker.git", this.moodleDockerDir),
+                    Clone.clone("https://github.com/mattiabonzi/mpdk-assets.git", this.assetDir)
                 ]
             );
         } catch (e) {
-            ui.error('Something went wrong cloning moodle-docker or mpdk-docker, check provided path, permissions and netwrok', e as Error)
+            ui.error('Something went wrong cloning moodle-docker or mpdk-assets, check provided path, permissions and netwrok', e as Error)
         }
+
+        //Download cachable data
+        await (new MoodleUtils(this)).updateCache();
 
 
         //Finish
+        this.debug('Install finished');
         return true;
     }
 
@@ -205,14 +248,14 @@ export default class Mpdk extends HasSetting {
      * @date 1/27/2023 - 3:22:48 PM
      * @rollback Mpdk:install
      * @public
-     */
+     
     public rollback_install() {
         ui.log('Rollbacking...');
         rmSync(this.baseDir, { recursive: true, force: true });
         rmSync(this.configDir, { recursive: true, force: true });
         rmSync(this.dataDir, { recursive: true, force: true });
     }
-
+*/
 
   
 
@@ -327,14 +370,6 @@ export default class Mpdk extends HasSetting {
       this._home = val
     }
     
-    get bin() {
-      return this._bin
-    }
-    
-    set bin(val: string) {
-      this._bin = val
-    }
-    
     get configDir() {
       return this._configDir
     }
@@ -439,14 +474,6 @@ export default class Mpdk extends HasSetting {
       this._proxy = val
     }
     
-    get remoteHost() {
-      return this._remoteHost
-    }
-    
-    set remoteHost(val: string) {
-      this._remoteHost = val
-    }
-    
     get browser() {
       return this._browser
     }
@@ -479,19 +506,13 @@ export default class Mpdk extends HasSetting {
       this._cacheDir = val
     }
     
-    get logDocker() {
-      return this._logDocker
-    }
-    
-    set logDocker(val: boolean) {
-      this._logDocker = val
-    }
+
 
     get defaultInstance() {
       return this._defaultInstance
     }
     
-    set defaultInstance(val: any[]) {
+    set defaultInstance(val: string) {
       this._defaultInstance = val
     }
 
@@ -527,7 +548,26 @@ export default class Mpdk extends HasSetting {
       this._copyright = val
     }
 
-  
+
+    get assetDir() {
+      return this._assetDir
+    }
+    
+    set assetDir(val: string) {
+      this._assetDir = val
+    }
+
+
+    get defaultDb() {
+      return this._defaultDb
+    }
+
+
+    set defaultDb(val: string) {
+      this._defaultDb = val
+    }
+    
+
     
 
     

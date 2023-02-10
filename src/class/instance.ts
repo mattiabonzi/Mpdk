@@ -71,7 +71,8 @@ export default class Instance extends HasSetting {
     if (existsSync(this.path)) {
       ui.stop('An instance with the same name already exist');
     }
-
+  
+  
     //merge options
     this.load({
       ...options,

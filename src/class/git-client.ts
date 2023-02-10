@@ -23,14 +23,14 @@ export default abstract class  GitClient {
     public constructor(plugin: MoodlePlugin, mpdk: Mpdk) {
         this.plugin = plugin;
         this.mpdk = mpdk;
-     
+        this.repo = new Git.Repository();
     }
 
     public async load() {
         if (this.plugin.useGit) {
             if (existsSync(join(this.plugin.path, '.git'))) {
                 this.debug('Loading gitnode');
-                this.repo = await Git.Repository.open(this.plugin.path, 0);
+                this.repo = await Git.Repository.open(this.plugin.path);
                 this.debug('Gitnode loaded: '+this.repo.path());
             } else this.debug('Repository not found, not loading for now');
         }

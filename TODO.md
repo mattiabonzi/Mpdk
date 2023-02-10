@@ -14,13 +14,16 @@
 - [ ] inmstall plugin after add or new
 - [ ] che install plugin su phpunit e baht instance
 - [ ] rievedere esempi e descirizioni per ogni comando
+- [ ] Encrtpt token
 
-
-## Primi test pugin
+## Primi test 
 - [ ] Il flag -i per selezionare l'istanza non va su plugin, forse meglio rivedere i flag globali
 - [ ] Rollback su new plugin non funziona
 - [ ] Non viene controllato se repository esiste gia prima di creare plugin
 - [ ] Controllare bene meccanismi di rollback per i settaggi di plugiinstalalto, che senno va fuoir sync
+- [ ] Rollbak intsall deve controllare se ci sono gia plugin o istnze prima di cancellare
+- [ ]  assicurarsi che, se non specificato espressamente vegnaon usate solo verioni stabili di moodle quando si crea nuova istanza
+- [ ]  scaricare moodle su host per code completions
 
 
 

@@ -9,8 +9,11 @@
     "strict": true,
     "target": "es2019",
     "typeRoots" : ["src/@types", "./node_modules/@types"],
-    "lib": ["ES2021.String"]
+    "lib": ["ES2021.String"],
+    "esModuleInterop": true,
+    "composite": true
   },
+  
   "include": [
     "src/**/*"
   ],

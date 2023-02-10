@@ -13,6 +13,7 @@ import { JSONPath } from "jsonpath-plus";
 import PhpVarParser from "phpvarparser";
 
 
+
 export interface MoodleVersion {
     name: string;
     zipball_url: string;
@@ -88,7 +89,7 @@ export default class MoodleUtils {
 
     public async updateMoodleList(force: boolean = false) {
         //throttle to not bombard github, love you github
-        axiosThrottle.use(axios, { requestsPerSecond: 5 });
+        axiosThrottle.use(axios, { requestsPerSecond: 8 });
         if (force || !existsSync(this.moodleFile) || statSync(this.moodleFile).mtime.getTime() < new Date().getTime() - MoodleUtils.shortTimeFrame) {
             this.debug('Updating moodle version list');
             var content: any = {};
@@ -164,20 +165,35 @@ export default class MoodleUtils {
         var versionInfo = null;
         var cleaned = semver.coerce(version)?.version as string;
         if (!version || version == 'latest') {
+            //Lastest version
             versionInfo = Object.values(versionList)[0];
-        } else if (version.match('\\d{10}\\.\\d{2}')) {
-            versionInfo = JSONPath<string>({path: `$..[?(@.versionInt == "${version}")]`, json: versionList})[0];
         } else if (version.match('\\d{10}')) {
-            versionInfo = JSONPath<string>({path: `$..[?(@.versionInt == "${version}.00")]`, json: versionList})[0];
+            //Version info in form 2023110900 or 2023110900.00
+            if (!version.match('\\d{10}\\.\\d{2}')) {
+                version = version + '.00';
+            }
+            versionInfo = JSONPath<string>({path: `$..[?(@.versionInt == "${version}")]`, json: versionList})[0];
+        } else if (version.match(/^\d{1,3}\.*\d{0,3}$/g)) {
+            //Version info in form 3 or 3.1 (or 3. it will be cleaned)
+            if (version.endsWith('.')) {
+                version = version.substring(0, version.length-1);
+            }
+            version = Object.keys(versionList).filter((v:string) => v.startsWith('v'+version)).reduce((max:string, act:string) => {
+                act = semver.coerce(act)?.version as string;
+                return (!max || (act && semver.gt(act, max))) ? act : max;
+            }, '');
+            versionInfo = version ? versionList['v'+version] : null;
         } else if (versionList.hasOwnProperty('v'+version)) {
+            //Versin in form 3.11.8
             versionInfo = versionList['v'+version];
         } else if (cleaned && versionList.hasOwnProperty('v'+cleaned)) {
+            //Version in valid semver form
             versionInfo = versionList['v'+cleaned];
         }
         
         
         if (!versionInfo) {
-            ui.error('Version not found, try to update the cache using mpdk update-cache or check the version name');
+            ui.error('Version not found, try to update the cache using mpdk update-cache or check the version name (Min version is 3.0)');
         }
         return versionInfo;
     }

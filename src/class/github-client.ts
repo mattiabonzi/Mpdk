@@ -1,7 +1,7 @@
 import GitClient from "./git-client.js";
 import { Octokit } from "@octokit/rest";
 //@ts-ignore
-import Git from "nodegit";
+import * as Git from "nodegit";
 import debug from "debug";
 import ui from "./ui.js";
 import MoodlePlugin, { PluginVersion } from "./plugin.js";
@@ -35,7 +35,7 @@ export default class GitHubClient extends GitClient {
                 return 1;
             },
             credentials: (url: string, username: string) => {
-                return Git.Credential.userpassPlaintextNew(this.mpdk.github.token, "x-oauth-basic");
+                return Git.Cred.userpassPlaintextNew(this.mpdk.github.token, "x-oauth-basic");
             }
         }
     };

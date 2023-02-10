@@ -41,7 +41,6 @@ export default abstract class HasSetting {
     }
 
     public static saveSetting(setting:any) {
-      ui.debug('Saving setting to: ' + setting.configFile);
       if (!setting.configFile) {
         ui.error('Something really bad happened. Please report this bug (no-setting-file).');
       }
