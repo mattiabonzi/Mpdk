@@ -306,7 +306,7 @@ export default class MoodlePlugin extends HasSetting {
     }
     await instance.docker?.exec(`ln -s /opt/mpdk/myplugins/${this.component} /var/www/html/${this.relativePath}/${this.shortname}`);
     var result = await instance.docker?.exec(`php admin/cli/upgrade.php --non-interactive --allow-unstable --lang=en`, false);
-    console.log(result);
+    
     
     if (result.includes('completed successfully')) {
       this.instances.push(instance.name);
@@ -333,12 +333,12 @@ export default class MoodlePlugin extends HasSetting {
       return stop ? ui.stop('The instance is not running') : false;
     }
     var result = await instance.docker?.exec('php admin/cli/uninstall_plugins.php --run --plugins='+this.component, false);
-    console.log(result);
+    
     if (result.includes('Success')) {
       await instance.docker?.exec(`rm -rf /var/www/html/${this.relativePath}/${this.shortname}`);
       result = await instance.docker?.exec('php admin/cli/upgrade.php --non-interactive --allow-unstable --lang=en', false);
       if (result.includes('completed successfully')) {
-        console.log(result);
+        
         //@ts-ignore hate you typescript
         this.instances = this.instances.filter(i => i != instance.name);
         instance.plugins = instance.plugins.filter(p => p != this.component);
