@@ -1,6 +1,7 @@
 
 import { Flags, Args } from '@oclif/core';
 import inquirer from 'inquirer';
+import { join } from 'path';
 import BaseCommand from '../../class/base-command.js';
 import ui from '../../class/ui.js';
 
@@ -22,12 +23,14 @@ export default class InstanceNew extends BaseCommand<typeof InstanceNew> {
 
   static args = {
     name: Args.string({ description: 'Name of the new instance', required: true }),
-    option: Args.string({ description: 'Default options in JSON format (required if non-interactive)' }),
+    option: Args.string({ description: 'Default options in JSON format (required if non-interactive)' , required: false}),
   }
 
   public async run(): Promise<void> {
     
-     var options = {...this.mpdk.defaultInstance, ...this.getNonInteractiveJsonOptions(this.arg.option)}
+    
+    
+     var options = this.getNonInteractiveJsonOptions(this.arg.option);
 
       var questions = [{
         type: 'list',
@@ -36,7 +39,9 @@ export default class InstanceNew extends BaseCommand<typeof InstanceNew> {
         default: options.externalServices,
         choices: [{ name: 'No', value: false }, { name: 'Yes', value: true }]
       }];
-   
+      
+      
+      
       var options = { ...options, ...await inquirer.prompt(questions, options) }
       
     try {

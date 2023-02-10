@@ -18,7 +18,7 @@ export default class Proxy {
     constructor(mpdk: Mpdk) {
         this.mpdk = mpdk;
         this.configDir = join(this.mpdk.configDir, 'proxy');
-        this.docker = new DockerClient(this.mpdk.remoteHost);
+        this.docker = new DockerClient();
     }
 
     public async enable() {
@@ -62,7 +62,6 @@ export default class Proxy {
 
 
     public async createInstanceVH(instance: any, reload: boolean = true) {
-        var host = this.mpdk.remoteHost ?? '127.0.0.1';
         try {
             await this.createVh(instance.name, instance.hostname, `${instance.name}-webserver-1`, reload);
         } catch (e: any) {
@@ -71,7 +70,7 @@ export default class Proxy {
         
         if (this.mpdk.autoProxy) {
             ui.warn(`Will fail if you don't have sudo access, you can run, you can edit maually the /etc/hosts file and add the following line: 127.0.0.1 ${instance.hostname}`);
-            hostfile.set(host, instance.name);
+            hostfile.set('127.0.0.1', instance.name);
         }
 
     }

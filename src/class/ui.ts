@@ -13,9 +13,9 @@ export default class ui extends ux {
 
   public static log(message = '', ...args: any[]): void {
     message = format(typeof message === 'string' ? message : inspect(message), ...args);
-    if (!process.env['MPDK_NON_INTERACTIVE']) {
+    
       process.stdout.write(`[${color.blue('INFO')}] ${message}\n`)
-    }
+    
   }
 
   public static output(output:any, newLine:boolean=true): void {
@@ -37,15 +37,13 @@ export default class ui extends ux {
    */
   public static error(msg: string, error: Error | null = null, code: number = 1, rethrow=true): never {
     ux.action.stop('cancelling');
-    if (!process.env['MPDK_NON_INTERACTIVE']) {
-      process.stdout.write(`[${color.red('ERROR')}] ${msg}\n`);
+    
+      process.stderr.write(`[${color.red('ERROR')}] ${msg}\n`);
       if (rethrow) {
-        if (process.env['MPDK_DEV'] && error)  process.stdout.write(`[${color.red('DETAILS')}] ${error.message}\n`); 
+        if (process.env['MPDK_DEV'] && error)  process.stderr.write(`[${color.red('DETAILS')}] ${error.message}\n`); 
         throw Errors.error(error ?? new Error(msg));
       }
-    } else {
-      process.stdout.write(JSON.stringify({error: msg, msg: error?.message}));
-    }
+
     process.exit(code);
   }
 
@@ -74,9 +72,9 @@ export default class ui extends ux {
   }
 
   public static warn(message: string): boolean {
-    if (!process.env['MPDK_NON_INTERACTIVE']) {
+    
       process.stdout.write(`[${color.yellow('WARNING')}] ${message}\n`)
-    }
+    
     return false;
   }
 
@@ -85,9 +83,9 @@ export default class ui extends ux {
   public static success(message = '', ...args: any[]): never {
     ux.done();
     message = format(typeof message === 'string' ? message : inspect(message), ...args);
-    if (!process.env['MPDK_NON_INTERACTIVE']) {
+    
       process.stdout.write(`[${color.green('SUCCESS')}] ${message}\n`)
-    }
+    
     process.exit(0);
   }
 

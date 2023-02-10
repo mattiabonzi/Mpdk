@@ -16,12 +16,12 @@ export default class Dns {
     constructor(mpdk: Mpdk) {
         this.mpdk = mpdk;
         this.workDir = join(this.mpdk.dataDir, 'mpdk-docker', 'proxy');
-        this.docker = new DockerClient(this.mpdk.remoteHost, this.workDir);
+        this.docker = new DockerClient(this.workDir);
         this.configDir = join(this.mpdk.configDir, 'dns');
     }
 
     public async enable() {
-        this.docker = this.docker ?? new DockerClient(this.mpdk.remoteHost, this.workDir);
+        this.docker = this.docker ?? new DockerClient(this.workDir);
         if (!this.mpdk.proxy) {
             ui.stop('Proxy must be enabled before enabling dns, run "mpdk proxy enable"');
         }

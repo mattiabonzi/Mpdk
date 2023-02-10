@@ -51,7 +51,6 @@ export default class PluginNew extends BaseCommand<typeof PluginNew> {
 
       var options = { ...this.getNonInteractiveJsonOptions(this.arg.option), editmanually: true };
       var utils = new MoodleUtils(this.mpdk);
-      if (!this.nonInteractive) {
         // @ts-ignore
         inquirer.registerPrompt('search-list', searchlist);
         var yesNo = [{ name: 'Yes', value: true }, { name: 'No', value: false }];
@@ -73,7 +72,7 @@ export default class PluginNew extends BaseCommand<typeof PluginNew> {
         }
 
         options = { ...options, ...await inquirer.prompt(questions, options) }
-      }
+      
       this.debug('Creating plugin ' + options.type + '_' + options.shortname + ' with options: ' + JSON.stringify(options));
       ui.action.start('Creating new plugin');
       await this.mpdk.plugin.new(options);
